@@ -1,10 +1,19 @@
+import os
+import re
+import vlc
 import gtts
 import socket
-import re
-from playsound import playsound
-from langdetect import detect
+import tempfile
 import configparser
+from playsound import playsound
+from langdetect import detect, DetectorFactory
 
+DetectorFactory.seed = 0
+
+tempdir = tempfile.gettempdir()
+
+player = vlc.Instance()
+player.log_unset()
 
 config = configparser.ConfigParser()
 config.read('config.ini')
@@ -27,7 +36,7 @@ def main():
     sock.send(f"NICK {nickname}\n".encode('utf-8'))
     sock.send(f"JOIN {channel}\n".encode('utf-8'))
 
-    print('Connecting...')
+    print('\n\nConnecting...')
     connected = False
 
     while True:
@@ -41,20 +50,29 @@ def main():
             sock.send("PONG\n".encode('utf-8'))
 
         elif len(resp) > 0:
-            try:
-                username, channel, message = re.search(':(.*)\!.*@.*\.tmi\.twitch\.tv PRIVMSG #(.*) :(.*)', resp).groups()
+            # try:
+                if "PRIVMSG" in resp:
+                    username, channel, message = re.search(':(.*)\!.*@.*\.tmi\.twitch\.tv PRIVMSG #(.*) :(.*)', resp).groups()
 
-                if username.lower() == ignore_user.lower():
-                    print(f'Muted user not played: {ignore_user}')
-                    continue
+                    if username.lower() == ignore_user.lower():
+                        print(f'Muted user not played: {ignore_user}')
+                        continue
 
-                language = detect(message)
+                    language = detect(message)
 
-                tts = gtts.gTTS(f'{username}      {message}', lang=language)
-                tts.save("_last.mp3")
-                playsound("_last.mp3")
-            except:
-                pass
+                    if len(message.split()) <= 3 and language not in ('en', 'de'):
+                        language = 'en'
+
+                    tts = gtts.gTTS(f'{username}      {message}', lang=language)
+                    tts.save(tempdir + "\_last_twitch_chat_message.mp3")
+
+                    if os.name == 'nt':
+                        # Windows audio play
+                        p = vlc.MediaPlayer(player, tempdir + "\_last_twitch_chat_message.mp3")
+                        p.play()
+                    else:
+                        # Unix audio play
+                        playsound(tempdir + "\_last_twitch_chat_message.mp3")
 
 
 if __name__ == '__main__':

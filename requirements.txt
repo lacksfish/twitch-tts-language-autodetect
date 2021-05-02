@@ -5,6 +5,7 @@ gTTS==2.2.2
 idna==2.10
 langdetect==1.0.8
 playsound==1.2.2
+python-vlc==3.0.12118
 requests==2.25.1
 ruamel.yaml==0.17.4
 ruamel.yaml.clib==0.2.2
