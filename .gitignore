@@ -1,0 +1,4 @@
+venv/*
+config.ini
+_last.mp3
+.idea/*
