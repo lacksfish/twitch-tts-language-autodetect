@@ -1,6 +1,7 @@
 import os
 import re
 import vlc
+import time
 import gtts
 import socket
 import tempfile
@@ -92,6 +93,11 @@ def main():
                         # Windows audio play
                         p = vlc.MediaPlayer(player, tempdir + "\_last_twitch_chat_message.mp3")
                         p.play()
+                        # Actually wait for audio file to finish playing - jesus
+                        # https://stackoverflow.com/a/49185960
+                        time.sleep(1.5)
+                        duration = p.get_length() / 1000
+                        time.sleep(duration)
                     else:
                         # Unix audio play
                         playsound(tempdir + "\_last_twitch_chat_message.mp3")
