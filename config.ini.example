@@ -2,4 +2,4 @@
 twitch_username=thisismytwitchusername
 # GET YOUR OAUTH TOKEN FROM https://twitchapps.com/tmi/
 oauth_token=oauth:abcdefghijk0123456789012345678
-ignore_user=Streamlabs
+ignore_user=streamlabs
