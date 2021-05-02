@@ -6,15 +6,27 @@ import socket
 import tempfile
 import configparser
 from playsound import playsound
-from langdetect import detect, DetectorFactory
+from textblob import TextBlob as TB
 
-DetectorFactory.seed = 0
+#                __
+#               / _)
+#      _/\/\/\_/ /
+#    _|         /
+#  _|  (  | (  |
+# /__.-'|_|--|_|
+# You have been visited by code dino,
+# you shall receive eternal luck. ⊂(◉‿◉)つ
 
+
+# Get temp dir for audio files
 tempdir = tempfile.gettempdir()
 
-player = vlc.Instance()
-player.log_unset()
+# Init VLC media player - windows only
+if os.name == 'nt':
+    player = vlc.Instance()
+    player.log_unset()
 
+# Read config from config.ini
 config = configparser.ConfigParser()
 config.read('config.ini')
 
@@ -50,7 +62,7 @@ def main():
             sock.send("PONG\n".encode('utf-8'))
 
         elif len(resp) > 0:
-            # try:
+                # If it is a user chat message
                 if "PRIVMSG" in resp:
                     username, channel, message = re.search(':(.*)\!.*@.*\.tmi\.twitch\.tv PRIVMSG #(.*) :(.*)', resp).groups()
 
@@ -58,14 +70,24 @@ def main():
                         print(f'Muted user not played: {ignore_user}')
                         continue
 
-                    language = detect(message)
+                    # Detect language of chat message
+                    text = TB(message)
+                    language = text.detect_language()
 
-                    if len(message.split()) <= 3 and language not in ('en', 'de'):
-                        language = 'en'
+                    # If it is a very short message and it's neither german nor english, just stick with english
+                    # if len(message.split()) <= 3 and language not in ('en', 'de'):
+                    #     language = 'en'
 
-                    tts = gtts.gTTS(f'{username}      {message}', lang=language)
+                    # Create and save TTS mp3 file in temp folder
+                    # Try with detected language, otherwise just use english as a failsafe
+                    try:
+
+                        tts = gtts.gTTS(f'{username}      {message}', lang=language)
+                    except:
+                        tts = gtts.gTTS(f'{username}      {message}', lang='en')
                     tts.save(tempdir + "\_last_twitch_chat_message.mp3")
 
+                    # Play audio depending on operating system
                     if os.name == 'nt':
                         # Windows audio play
                         p = vlc.MediaPlayer(player, tempdir + "\_last_twitch_chat_message.mp3")
