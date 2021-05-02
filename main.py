@@ -11,6 +11,7 @@ config.read('config.ini')
 
 oauth = config['DEFAULT']['oauth_token']
 username_twitch = config['DEFAULT']['twitch_username']
+ignore_user = config['DEFAULT']['ignore_user']
 
 
 def main():
@@ -35,6 +36,9 @@ def main():
         elif len(resp) > 0:
             try:
                 username, channel, message = re.search(':(.*)\!.*@.*\.tmi\.twitch\.tv PRIVMSG #(.*) :(.*)', resp).groups()
+
+                if username.lower() is ignore_user.lower():
+                    return
 
                 language = detect(message)
 
