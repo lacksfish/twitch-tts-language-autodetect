@@ -6,6 +6,8 @@ This tool will trigger on Twitch chat messages, detecting their written language
 
 You will need python and pip
 
+On Windows, you will also need **VLC** installed for audio playback
+
 ### Run this to install required libraries
 ```bash
 pip install -r requirements.txt
