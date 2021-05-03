@@ -35,4 +35,4 @@ def init_message():
     print(' _|  (  | (  |')
     print('/__.-\'|_|--|_|')
     print('You have been visited by code dino,')
-    print('you shall receive eternal luck. ⊂(◉‿◉)つ\n\n')
+    print('you shall receive eternal luck!\n\n')
