@@ -6,22 +6,19 @@ import tempfile
 import configparser
 os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = "hide"
 from pygame import mixer
+from logger import get_logger, init_message
 from pathlib import Path
 from playsound import playsound
 from textblob import TextBlob as TB
 
-#                __
-#               / _)
-#      _/\/\/\_/ /
-#    _|         /
-#  _|  (  | (  |
-# /__.-'|_|--|_|
-# You have been visited by code dino,
-# you shall receive eternal luck. ⊂(◉‿◉)つ
+init_message()
 
 # Init audio for windows
 if os.name == 'nt':
     mixer.init()
+
+# Init message logs
+log = get_logger('MAIN')
 
 # Get temp dir for audio files
 tempdir = tempfile.gettempdir() + '\diy_TTS'
@@ -49,7 +46,7 @@ def main():
     sock.send(f"NICK {nickname}\n".encode('utf-8'))
     sock.send(f"JOIN {channel}\n".encode('utf-8'))
 
-    print('Connecting...')
+    print('Connecting to chat...')
     connected = False
 
     while True:
@@ -68,8 +65,9 @@ def main():
                     username, channel, message = re.search(':(.*)\!.*@.*\.tmi\.twitch\.tv PRIVMSG #(.*) :(.*)', resp).groups()
 
                     if username.lower() == ignore_user.lower():
-                        print(f'Muted user not played: {ignore_user}')
+                        log.info(f'Muted user not played: {ignore_user}')
                         continue
+                    log.info(f'New message from {username}: {message}')
 
                     # Delete old temp message mp3's
                     mixer.music.unload()
@@ -86,9 +84,9 @@ def main():
                     # Create and save TTS mp3 file in temp folder
                     # Try with detected language, otherwise just use english as a failsafe
                     try:
-                        tts = gtts.gTTS(f'{username}      {message}', lang=language)
+                        tts = gtts.gTTS(f'{username}: {message}', lang=language)
                     except:
-                        tts = gtts.gTTS(f'{username}      {message}', lang='en')
+                        tts = gtts.gTTS(f'{username}: {message}', lang='en')
                     tempfile_name = next(tempfile._get_candidate_names())
                     tts.save(tempdir + f'\{tempfile_name}.mp3')
 
