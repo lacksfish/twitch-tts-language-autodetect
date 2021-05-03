@@ -26,6 +26,15 @@ pip install -r requirements.txt
 python main.py
 ```
 
+Or turn this project into an single file executable by using pyinstaller
+
+```bash
+pip install pyinstaller
+pyinstaller --onefile --paths path\to\venv\Lib\site-packages main.py
+```
+
+Alternatively, I will do this for you and you can get the compiled file under the [releases](https://github.com/lacksfish/twitch-tts-language-autodetect/releases).
+
 ## Contributing
 Pull requests are welcome. For major changes, please open an issue first to discuss what you would like to change.
 
