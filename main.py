@@ -2,6 +2,7 @@ import os
 import re
 import time
 import gtts
+import emoji
 import socket
 import tempfile
 import configparser
@@ -70,7 +71,7 @@ def main():
                     if username.lower() == ignore_user.lower():
                         log.info(f'Muted user not played: {ignore_user}')
                         continue
-                    log.info(f'New message from {username}: {message}')
+                    log.info(f'New message from {username}: {emoji.demojize(message)}')
 
                     # Delete old temp message mp3's
                     for f in os.listdir(tempdir):
