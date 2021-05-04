@@ -1,17 +1,17 @@
 import logging
+import socket
 
 
 def get_logger(logger_name, create_file=False):
-    # create logger for prd_ci
     log = logging.getLogger(logger_name)
-    log.setLevel(level=logging.INFO)
+    log.setLevel(level=logging.DEBUG)
 
     # create formatter and add it to the handlers
     formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 
     if create_file:
         # create file handler for logger.
-        fh = logging.FileHandler('SPOT.log')
+        fh = logging.FileHandler('output.log')
         fh.setLevel(level=logging.DEBUG)
         fh.setFormatter(formatter)
     # create console handler for logger.

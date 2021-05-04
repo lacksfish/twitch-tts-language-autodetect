@@ -18,9 +18,6 @@ init_message()
 if os.name == 'nt':
     mixer.init()
 
-# Init message logs
-log = get_logger('MAIN')
-
 # Get temp dir for audio files
 tempdir = tempfile.gettempdir() + '\diy_TTS'
 Path(tempdir).mkdir(parents=True, exist_ok=True)
@@ -32,6 +29,10 @@ config.read('config.ini')
 oauth = config['DEFAULT']['oauth_token']
 twitch_username = config['DEFAULT']['twitch_username']
 ignore_user = config['DEFAULT']['ignore_user']
+logfile = config['DEFAULT']['logfile']
+
+# Init message logs
+log = get_logger('MAIN', create_file=logfile)
 
 
 def main():
@@ -47,72 +48,83 @@ def main():
     sock.send(f"NICK {nickname}\n".encode('utf-8'))
     sock.send(f"JOIN {channel}\n".encode('utf-8'))
 
-    print('Connecting to chat...')
+    log.info('Connecting to chat...')
     connected = False
 
     while True:
         try:
             resp = sock.recv(2048).decode('utf-8')
 
-            if resp and not connected:
-                print(f'Connected to {nickname}!')
-                connected = True
+            if not connected:
+                if len(resp) > 0:
+                    log.info(f'Connected to {twitch_username}!')
+                    connected = True
 
             if resp.startswith('PING'):
                 sock.send("PONG\n".encode('utf-8'))
-
             elif len(resp) > 0:
-                    # If it is a user chat message
-                    if "PRIVMSG" in resp:
-                        username, channel, message = re.search(':(.*)\!.*@.*\.tmi\.twitch\.tv PRIVMSG #(.*) :(.*)', resp).groups()
+                # If it is a user chat message
+                if "PRIVMSG" in resp:
+                    username, channel, message = re.search(':(.*)\!.*@.*\.tmi\.twitch\.tv PRIVMSG #(.*) :(.*)', resp).groups()
 
-                        if username.lower() == ignore_user.lower():
-                            log.info(f'Muted user not played: {ignore_user}')
-                            continue
-                        log.info(f'New message from {username}: {message}')
+                    if username.lower() == ignore_user.lower():
+                        log.info(f'Muted user not played: {ignore_user}')
+                        continue
+                    log.info(f'New message from {username}: {message}')
 
-                        # Delete old temp message mp3's
-                        for f in os.listdir(tempdir):
-                            try:
-                                os.remove(os.path.join(tempdir, f))
-                            except:
-                                pass
+                    # Delete old temp message mp3's
+                    for f in os.listdir(tempdir):
+                        try:
+                            os.remove(os.path.join(tempdir, f))
+                        except:
+                            pass
 
-                        # Detect language of chat message
+                    # Detect language of chat message, use english as failsafe
+                    try:
                         text = TB(message)
                         language = text.detect_language()
+                    except:
+                        language = 'en'
 
-                        # Create and save TTS mp3 file in temp folder
-                        # Try with detected language, otherwise just use english as a failsafe
-                        try:
-                            tts = gtts.gTTS(f'{username}: {message}', lang=language)
-                        except:
-                            tts = gtts.gTTS(f'{username}: {message}', lang='en')
-                        tempfile_name = next(tempfile._get_candidate_names())
-                        tts.save(tempdir + f'\{tempfile_name}.mp3')
+                    # Try speaking with detected language, use english as a failsafe
+                    try:
+                        tts = gtts.gTTS(f'{username}: {message}', lang=language)
+                    except:
+                        tts = gtts.gTTS(f'{username}: {message}', lang='en')
+                    # Create and save TTS mp3 file in temp folder
+                    tempfile_name = next(tempfile._get_candidate_names())
+                    tts.save(tempdir + f'\{tempfile_name}.mp3')
 
-                        # Play audio depending on operating system
-                        if os.name == 'nt':
-                            # Wait on previous message
-                            while mixer.music.get_busy():
-                                time.sleep(0.5)
-                            # Unload old messages
-                            mixer.music.unload()
-                            # Windows audio play
-                            mixer.music.load(tempdir + f'\{tempfile_name}.mp3')
-                            mixer.music.play()
-                        else:
-                            # Unix audio play
-                            playsound(tempdir + f'\{tempfile_name}.mp3')
-        except:
-            sock = socket.socket()
-            sock.connect((server, port))
-            sock.send(f"PASS {token}\n".encode('utf-8'))
-            sock.send(f"NICK {nickname}\n".encode('utf-8'))
-            sock.send(f"JOIN {channel}\n".encode('utf-8'))
-
-            print('Some darn error. Reconnecting to chat...')
+                    # Play audio depending on operating system
+                    if os.name == 'nt':
+                        # Wait on previous message
+                        while mixer.music.get_busy():
+                            time.sleep(0.5)
+                        # Unload old messages
+                        mixer.music.unload()
+                        # Windows audio play
+                        mixer.music.load(tempdir + f'\{tempfile_name}.mp3')
+                        mixer.music.play()
+                    else:
+                        # Unix audio play
+                        playsound(tempdir + f'\{tempfile_name}.mp3')
+        except Exception as e:
+            log.error(str(e))
             connected = False
+            sock.close()
+            while not connected:
+                try:
+                    sock = socket.socket()
+                    sock.connect((server, port))
+                    sock.send(f"PASS {token}\n".encode('utf-8'))
+                    sock.send(f"NICK {nickname}\n".encode('utf-8'))
+                    sock.send(f"JOIN {channel}\n".encode('utf-8'))
+                    connected = True
+                    log.info(f'Reconnected to {twitch_username}!')
+                except:
+                    log.error('Not connected, reconnecting ...')
+                time.sleep(5)
+        time.sleep(0.5)
 
 
 if __name__ == '__main__':
