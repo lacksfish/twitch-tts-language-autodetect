@@ -4,3 +4,5 @@ twitch_username=thisismytwitchusername
 oauth_token=oauth:abcdefghijk0123456789012345678
 ignore_user=streamlabs
 logfile=true
+playback_speed=1.0
+languages=all,en,de,fr,es
