@@ -126,7 +126,7 @@ def main():
                     ##SUGGESTION 2
                     if playback_speed != 1:
                         sound = AudioSegment.from_file(tempdir + f'\{tempfile_name}.mp3')
-                        so = sound.speedup(playback_speed, 150, 25)
+                        so = sound.speedup(float(playback_speed), 150, 25)
                         tempfile_name = tempfile_name + str(playback_speed)
                         so.export(tempdir + f'\{tempfile_name}.mp3', format = 'mp3')
 
