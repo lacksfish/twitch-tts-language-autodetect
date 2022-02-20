@@ -1,11 +1,13 @@
 certifi==2020.12.5
 chardet==4.0.0
 click==7.1.2
+configparser==5.0.2
 emoji==1.2.0
 gTTS==2.2.2
 idna==2.10
 joblib==1.0.1
 nltk==3.6.2
+pathlib==1.0.1
 playsound==1.2.2
 pygame==2.0.1
 regex==2021.4.4

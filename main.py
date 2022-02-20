@@ -6,6 +6,14 @@ import emoji
 import socket
 import tempfile
 import configparser
+
+## SUGGESTION 1 translate "says"
+from translate import Translator
+
+##SUGGESTION 2 control playback speed (requires ffmpeg)
+from pydub import AudioSegment
+from pydub import effects
+
 os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = "hide"
 from pygame import mixer
 from logger import get_logger, init_message
@@ -31,6 +39,13 @@ oauth = config['DEFAULT']['oauth_token']
 twitch_username = config['DEFAULT']['twitch_username']
 ignore_user = config['DEFAULT']['ignore_user']
 logfile = config['DEFAULT']['logfile']
+
+##SUGGESTION 2
+playback_speed = config['DEFAULT']['playback_speed']
+
+##SUGGESTION 3 choose a list of languages (include all in list if all languages should be covered)
+languages = config['DEFAULT']['languages']
+languages_list = languages.replace(" ","").split(",")
 
 # Init message logs
 log = get_logger('MAIN', create_file=logfile)
@@ -86,15 +101,34 @@ def main():
                         language = text.detect_language()
                     except:
                         language = 'en'
+                    
+                    ##SUGGESTION 3
+                    if language not in languages_list and "all" not in languages_list:
+                        language = 'en'
+					
+                    ##SUGESTION 1 START
+                    translator= Translator(to_lang=language,from_lang="en")
+                    says = translator.translate("says")
+                    if  "IS AN INVALID TARGET LANGUAGE" in says :
+                        says = ":"
 
                     # Try speaking with detected language, use english as a failsafe
                     try:
-                        tts = gtts.gTTS(f'{username}: {message}', lang=language)
+                        tts = gtts.gTTS(f'{username}{says} {message}', lang=language)
                     except:
                         tts = gtts.gTTS(f'{username}: {message}', lang='en')
+                    ##SUGESTION 1 END
+                    
                     # Create and save TTS mp3 file in temp folder
                     tempfile_name = next(tempfile._get_candidate_names())
                     tts.save(tempdir + f'\{tempfile_name}.mp3')
+                    
+                    ##SUGGESTION 2
+                    if playback_speed != 1:
+                        sound = AudioSegment.from_file(tempdir + f'\{tempfile_name}.mp3')
+                        so = sound.speedup(float(playback_speed), 150, 25)
+                        tempfile_name = tempfile_name + str(playback_speed)
+                        so.export(tempdir + f'\{tempfile_name}.mp3', format = 'mp3')
 
                     # Play audio depending on operating system
                     if os.name == 'nt':
